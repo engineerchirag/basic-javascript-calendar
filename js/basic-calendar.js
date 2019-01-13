@@ -1,9 +1,10 @@
-function Calendar(element) {
+function Calendar(element, events) {
     this.el = document.getElementById(element);
     this.months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     this.days = ['SUN', 'MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'];
     this.Today = new Date();
     this.Selected = {};
+    this.events = events;
     this.changeMonth(this.Today.getMonth(), this.Today.getFullYear());
 }
 
@@ -43,10 +44,19 @@ Calendar.prototype.drawDays = function () {
 }
 
 Calendar.prototype.drawDates = function () {
+    var self = this;
     this.dateRow = {};
     var rowNumber;
     if (!this.datesWrapper) {
         this.datesWrapper = createElement('div');
+        this.datesWrapper.addEventListener('click', function (event) {
+            var targetId = event.target.id;
+            if (targetId) {
+                self.Selected.Date = new Date(getformattedDate(targetId, (self.Selected.Month + 1), self.Selected.Year));
+                self.Selected.events = self.getSelectedDateEvents();
+                self.renderEvents();
+            }
+        });
     }
     var rowsNode = document.getElementsByClassName('cl-date-row');
     while (rowsNode.length) {
@@ -60,7 +70,12 @@ Calendar.prototype.drawDates = function () {
         }
         var dateCol = createElement('div', 'cl-date');
         if (i >= this.Selected.FirstDay) {
-            dateCol.innerHTML += i + 1 - this.Selected.FirstDay;
+            var date = i + 1 - this.Selected.FirstDay;
+            var formattedDate = formatDate(new Date(getformattedDate(date, (this.Selected.Month + 1), this.Selected.Year)));
+            var selectedDateEvents = this.events[formattedDate];
+            dateCol.id = date;
+            dateCol.className += (selectedDateEvents && selectedDateEvents.length) ? ' cl-has-event' : '';
+            dateCol.innerHTML += date;
         }
         this.dateRow[rowNumber].appendChild(dateCol);
     }
@@ -85,7 +100,61 @@ Calendar.prototype.changeMonth = function (month, year) {
     this.drawHeader();
     this.drawDays();
     this.drawDates();
+    this.Selected.events = [];
+    this.renderEvents();
 };
+
+Calendar.prototype.getSelectedDateEvents = function () {
+    var selectedDate = formatDate(this.Selected.Date);
+    return this.events[selectedDate];
+};
+
+Calendar.prototype.renderEvents = function () {
+    if (!this.eventWrapper) {
+        this.eventWrapper = createElement('div', 'cl-event-wrapper');
+    }
+    var rowsNode = document.getElementsByClassName('cl-event-row');
+    while (rowsNode.length) {
+        this.eventWrapper.removeChild(rowsNode[0]);
+    }
+    for (var eventIdx = 0; eventIdx < this.Selected.events.length; eventIdx++) {
+        var eventRow = createElement('div', 'cl-event-row');
+        var eventTitle = createElement('div', 'cl-event-title');
+        var eventDescription = createElement('div', 'cl-event-desc');
+        eventTitle.innerHTML = this.Selected.events[eventIdx].title;
+        eventDescription.innerHTML = this.Selected.events[eventIdx].description;
+        eventRow.appendChild(eventTitle);
+        eventRow.appendChild(eventDescription);
+        this.eventWrapper.appendChild(eventRow);
+    }
+    this.el.appendChild(this.eventWrapper);
+};
+
+function getformattedDate(d, m, y) {
+    var dd = d;
+    var mm = m;
+    var yyyy = y;
+    if (dd < 10) {
+        dd = '0' + dd;
+    }
+    if (mm < 10) {
+        mm = '0' + mm;
+    }
+    return mm + '/' + dd + '/' + yyyy;
+}
+
+function formatDate(date) {
+    var dd = date.getDate();
+    var mm = date.getMonth() + 1;
+    var yyyy = date.getFullYear();
+    if (dd < 10) {
+        dd = '0' + dd;
+    }
+    if (mm < 10) {
+        mm = '0' + mm;
+    }
+    return dd + '/' + mm + '/' + yyyy;
+}
 
 function createElement(element, className) {
     var el = document.createElement(element);
@@ -95,8 +164,57 @@ function createElement(element, className) {
     return el;
 }
 
-function createCalendar() {
-    var calendar = new Calendar('basic-calendar');
+function createCalendar(events) {
+    var eventDict = {};
+    for (var eventIdx = 0; eventIdx < events.length; eventIdx++) {
+        if (!eventDict[events[eventIdx].date]) {
+            eventDict[events[eventIdx].date] = [events[eventIdx]];
+        } else {
+            eventDict[events[eventIdx].date].push(events[eventIdx]);
+        }
+    }
+    var calendar = new Calendar('basic-calendar', eventDict);
 }
 
-createCalendar();
+var events = [{
+        date: '01/01/2019',
+        title: 'Event 1',
+        description: 'Event description goes here',
+    },
+    {
+        date: '01/01/2019',
+        title: 'Event 2',
+        description: 'Event description goes here',
+    },
+    {
+        date: '05/01/2019',
+        title: 'Event 3',
+        description: 'Event description goes here',
+    },
+    {
+        date: '01/01/2019',
+        title: 'Event 4',
+        description: 'Event description goes here',
+    },
+    {
+        date: '01/01/2019',
+        title: 'Event 5',
+        description: 'Event description goes here',
+    },
+    {
+        date: '10/01/2019',
+        title: 'Event 6',
+        description: 'Event description goes here',
+    },
+    {
+        date: '10/12/2018',
+        title: 'Event 7',
+        description: 'Event description goes here',
+    },
+    {
+        date: '01/01/2019',
+        title: 'Event 8',
+        description: 'Event description goes here',
+    }
+];
+createCalendar(events);

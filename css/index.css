@@ -48,4 +48,30 @@ body {
   width: calc(100% / 7);
   text-align: center;
   display: inline-block;
+  cursor: pointer;
+  position: relative;
+}
+
+.cl-has-event::after {
+  content: '';
+  position: absolute;
+  top: 7px;
+  right: 10px;
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: red;
+}
+
+.cl-date:hover {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.cl-event-wrapper {
+  padding-top: 15px;
+}
+
+.cl-event-row {
+  background: rgba(0, 0, 0, 0.04);
+  padding: 5px 15px;
 }
